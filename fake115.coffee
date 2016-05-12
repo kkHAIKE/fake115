@@ -208,10 +208,10 @@ LoginEncrypt_ = ({account,passwd,environment,goto},g) ->
         document.cookie = "CID=#{json_data.cookie.CID}; expires=#{datestr}; path=/; domain=115.com"
         document.cookie = "SEID=#{json_data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
         document.cookie = "OOFL=#{json_data.user_id}; expires=#{datestr}; path=/; domain=115.com"
-      unsafeWindow.window[g] JSON.stringify json
+      unsafeWindow[g] JSON.stringify json
 
-browserInterface = unsafeWindow.window.browserInterface ? {}
-unsafeWindow.window.browserInterface = browserInterface
+browserInterface = unsafeWindow.browserInterface ? {}
+unsafeWindow.browserInterface = browserInterface
 browserInterface.LoginEncrypt = (n,g) ->
   LoginEncrypt_ JSON.parse(n), g
 

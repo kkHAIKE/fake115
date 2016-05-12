@@ -205,14 +205,14 @@ LoginEncrypt_ = function(_arg, g) {
         document.cookie = "SEID=" + json_data.cookie.SEID + "; expires=" + datestr + "; path=/; domain=115.com";
         document.cookie = "OOFL=" + json_data.user_id + "; expires=" + datestr + "; path=/; domain=115.com";
       }
-      return unsafeWindow.window[g](JSON.stringify(json));
+      return unsafeWindow[g](JSON.stringify(json));
     }
   });
 };
 
-browserInterface = (_ref = unsafeWindow.window.browserInterface) != null ? _ref : {};
+browserInterface = (_ref = unsafeWindow.browserInterface) != null ? _ref : {};
 
-unsafeWindow.window.browserInterface = browserInterface;
+unsafeWindow.browserInterface = browserInterface;
 
 browserInterface.LoginEncrypt = function(n, g) {
   return LoginEncrypt_(JSON.parse(n), g);
