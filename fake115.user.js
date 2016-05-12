@@ -212,10 +212,12 @@ LoginEncrypt_ = function(_arg, g) {
 
 browserInterface = (_ref = unsafeWindow.browserInterface) != null ? _ref : {};
 
-unsafeWindow.browserInterface = browserInterface;
-
 browserInterface.LoginEncrypt = function(n, g) {
   return LoginEncrypt_(JSON.parse(n), g);
 };
+
+unsafeWindow.browserInterface = cloneInto(browserInterface, unsafeWindow, {
+  cloneFunctions: true
+});
 
 })();

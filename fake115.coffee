@@ -211,8 +211,9 @@ LoginEncrypt_ = ({account,passwd,environment,goto},g) ->
       unsafeWindow[g] JSON.stringify json
 
 browserInterface = unsafeWindow.browserInterface ? {}
-unsafeWindow.browserInterface = browserInterface
 browserInterface.LoginEncrypt = (n,g) ->
   LoginEncrypt_ JSON.parse(n), g
+
+unsafeWindow.browserInterface = cloneInto browserInterface, unsafeWindow, {cloneFunctions: true}
 
 `})()`
