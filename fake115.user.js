@@ -17,7 +17,7 @@
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/rng.js
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/ec.js
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/sec.js
-// @require      https://rawgit.com/pierrec/node-lz4/master/build/lz4.js
+// @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
 // @run-at       document-end
 // ==/UserScript==
 (function() {
