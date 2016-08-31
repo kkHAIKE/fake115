@@ -7,6 +7,7 @@
 // @match        http://115.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
+// @grant        GM_log
 // @connect      passport.115.com
 // @require      http://cdn.bootcss.com/crc-32/0.4.1/crc32.min.js
 // @require      http://cdn.bootcss.com/blueimp-md5/2.3.0/js/md5.min.js
@@ -222,10 +223,17 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
             json.is_two = true
             delete json.data
           unsafeWindow[g] JSON.stringify json
+        else
+          GM_log 'data is null'
+      else
+        GM_log "response.status = #{response.status}"
 
 browserInterface = unsafeWindow.browserInterface ? {}
 browserInterface.LoginEncrypt = (n,g) ->
-  LoginEncrypt_ JSON.parse(n), g
+  try
+    LoginEncrypt_ JSON.parse(n), g
+  catch error
+    GM_log "#{error}"
 
 unsafeWindow.browserInterface = cloneInto browserInterface, unsafeWindow, {cloneFunctions: true}
 
