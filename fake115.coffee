@@ -4,7 +4,7 @@
 // @version      1.1
 // @description  非115浏览器登录115.com
 // @author       kkhaike
-// @match        http://115.com/*
+// @match        https://115.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @grant        GM_log
@@ -188,7 +188,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
 
   GM_xmlhttpRequest
     method: 'POST'
-    url: "http://passport.115.com/?ct=encrypt&ac=login&k_ec=#{token}" #encodeURIComponent
+    url: "https://passport.115.com/?ct=encrypt&ac=login&k_ec=#{token}" #encodeURIComponent
     data: data
     binary: true
     responseType: 'arraybuffer'
