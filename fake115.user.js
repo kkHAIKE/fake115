@@ -221,7 +221,7 @@ LoginEncrypt_ = function(_arg, g) {
   }), key);
   return GM_xmlhttpRequest({
     method: 'POST',
-    url: "http://passport.115.com/?ct=encrypt&ac=login&k_ec=" + token,
+    url: "https://passport.115.com/?ct=encrypt&ac=login&k_ec=" + token,
     data: data,
     binary: true,
     responseType: 'arraybuffer',
