@@ -4,7 +4,7 @@
 // @version      1.1
 // @description  非115浏览器登录115.com
 // @author       kkhaike
-// @match        http://115.com/*
+// @match        *://115.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @grant        GM_log
@@ -19,7 +19,7 @@
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/ec.js
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/sec.js
 // @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
-// @run-at       document-end
+// @run-at       document-start
 // ==/UserScript==
 (function() {
     'use strict';
@@ -239,10 +239,10 @@ LoginEncrypt_ = function(_arg, g) {
         if (dec === 1) {
           data = ec115_decode_aes(data, key);
         }
-        if (unzip === 1) {
+        if ((data != null) && unzip === 1) {
           data = ec115_compress_decode(data);
         }
-        if (data !== null) {
+        if (data != null) {
           json = JSON.parse(bytesToString(data));
           if (json.state) {
             date = new Date();

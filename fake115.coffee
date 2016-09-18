@@ -4,7 +4,7 @@
 // @version      1.1
 // @description  非115浏览器登录115.com
 // @author       kkhaike
-// @match        http://115.com/*
+// @match        *://115.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @grant        GM_log
@@ -19,7 +19,7 @@
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/ec.js
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/sec.js
 // @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
-// @run-at       document-end
+// @run-at       document-start
 // ==/UserScript==
 (function() {
     'use strict'`
@@ -205,10 +205,10 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
 
         if dec is 1
           data = ec115_decode_aes data, key
-        if unzip is 1
+        if data? and unzip is 1
           data = ec115_compress_decode data
 
-        unless data is null
+        if data?
           json = JSON.parse bytesToString data
           if json.state
             date = new Date()
