@@ -1,7 +1,7 @@
 `// ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.1
+// @version      1.2
 // @description  非115浏览器登录115.com
 // @author       kkhaike
 // @match        *://115.com/*
@@ -9,6 +9,7 @@
 // @grant        unsafeWindow
 // @grant        GM_log
 // @connect      passport.115.com
+// @connect      passportapi.115.com
 // @require      http://cdn.bootcss.com/crc-32/0.4.1/crc32.min.js
 // @require      http://cdn.bootcss.com/blueimp-md5/2.3.0/js/md5.min.js
 // @require      https://rawgit.com/ricmoo/aes-js/master/index.js
@@ -19,10 +20,13 @@
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/ec.js
 // @require      http://www-cs-students.stanford.edu/~tjw/jsbn/sec.js
 // @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
+// @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
+// @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
 // @run-at       document-start
 // ==/UserScript==
 (function() {
     'use strict'`
+g_ver = '7.2.4.37'
 
 g_rng = new SecureRandom()
 g_c = secp224r1()
@@ -49,6 +53,13 @@ hexToBytes = (h) ->
     ret.push parseInt h[i...i + 2], 16
   return ret
 
+bytesToHex = (b) ->
+  ret = ''
+  for t in b
+    ret += (t >> 4).toString 16
+    ret += (t & 0xf).toString 16
+  return ret
+
 intToBytes = (x) ->
   ret = []
   for i in [0...4]
@@ -56,12 +67,15 @@ intToBytes = (x) ->
     x >>= 8
   return ret
 
+bytesToInt = (b) ->
+  return b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24)
+
 pick_rand = (n) ->
   n1 = n.subtract BigInteger.ONE
   r = new BigInteger n.bitLength(), g_rng
   r.mod(n1).add BigInteger.ONE
 
-ec115_encode_token = (tm) ->
+ec115_init = ->
   d = pick_rand g_c.getN()
   G = g_c.getG()
   P = G.multiply d
@@ -70,6 +84,10 @@ ec115_encode_token = (tm) ->
   y = P.getY().toBigInteger()
   pub = hexToBytes "1d#{if y.testBit(0) then "03" else "02"}#{pub[2...58]}"
 
+  K = g_Q.multiply d
+  return {pub, key: hexToBytes K.getX().toBigInteger().toString 16}
+
+ec115_encode_token = (pub, tm, cnt) ->
   r2 = new Array 2
   g_rng.nextBytes r2
 
@@ -84,19 +102,14 @@ ec115_encode_token = (tm) ->
   for i in [15...30]
     tmp.push pub[i] ^ r2[1]
   tmp.push r2[1]
-  tmp = tmp.concat intToBytes 0 #cnt
+  tmp = tmp.concat intToBytes cnt
   for i in [40...44]
     tmp[i] ^= r2[1]
 
   tmp2 = stringToBytes('^j>WD3Kr?J2gLFjD4W2y@').concat tmp
   tmp = tmp.concat intToBytes CRC32.buf(tmp2) >>> 0
 
-  K = g_Q.multiply d
-
-  return {
-    key: hexToBytes K.getX().toBigInteger().toString 16
-    token: window.btoa bytesToString tmp
-  }
+  return window.btoa bytesToString tmp
 
 ec115_encode_data = (data, key) ->
   key1 = key[0...16]
@@ -147,6 +160,78 @@ ec115_compress_decode = (data) ->
     p += len
   return ret
 
+get_key = (data_buf) ->
+  p = 0
+  ret = new Uint8Array 40
+  for i in [0...40]
+    t = bytesToInt data_buf[p...p + 4]
+    p = t + 1
+    ret[i] = data_buf[t]
+  return ret
+
+md4_init = (pSig) ->
+  ret = md4.create()
+  pSig_32 = new Int32Array pSig.buffer
+  ret.h0 = pSig_32[1]
+  ret.h1 = pSig_32[2]
+  ret.h2 = pSig_32[3]
+  ret.h3 = pSig_32[4]
+  ret.first = false
+  return ret
+
+sig_init = (body) ->
+  ori_data_p = Module._malloc body.length
+  Module.HEAPU8.set body, ori_data_p
+  data_buf_p = Module._malloc body.length
+  sz = Module.ccall 'calc_out', 'number', ['number', 'number', 'number'],
+    [ori_data_p, body.length, data_buf_p]
+  Module._free ori_data_p
+  data_buf = new Uint8Array Module.HEAPU8.buffer, data_buf_p, sz
+  pSig = get_key data_buf
+
+  md4h = md4_init pSig
+  md4h.update data_buf
+  dhash = md4h.digest()
+  return {data_buf, data_buf_p, pSig, dhash}
+
+sig_calc = ({data_buf, data_buf_p, pSig, dhash}, src) ->
+  md4h = md4_init pSig
+  md4h.update dhash
+  md4h.update src
+  md4h.update pSig
+  h1 = new Uint8Array md4h.buffer()
+
+  h1_p = Module._malloc 16
+  Module.HEAPU8.set h1, h1_p
+  out_data_p = Module._malloc 0x10000
+  sz = Module.ccall 'encode', 'number',
+    ['number', 'number', 'number', 'number', 'number', 'number', 'number'],
+    [data_buf_p, data_buf.length / 2, h1_p, 16, out_data_p, 8, 10]
+  Module._free data_buf_p
+  Module._free h1_p
+
+  out_data = new Uint8Array Module.HEAPU8.buffer, out_data_p, sz
+  md4h = md4_init pSig
+  md4h.update out_data
+  ret = md4h.digest()
+  Module._free out_data_p
+
+  ret.push pSig[0]
+  for i in [36...40]
+    ret.push pSig[i]
+  return bytesToHex ret
+
+ec115_decode = (data, key) ->
+  dec = data[data.length - 12 + 5]
+  unzip = data[data.length - 12 + 4]
+  data = data[0...-12]
+
+  if dec is 1
+    data = ec115_decode_aes data, key
+  if data? and unzip is 1
+    data = ec115_compress_decode data
+  return data
+
 dictToQuery = (dict) ->
   tmp = []
   for k, v of dict
@@ -159,12 +244,12 @@ dictToForm = (dict) ->
     tmp.push "#{k}=#{v}"
   return tmp.join '&'
 
-LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
+LoginEncrypt_ = ({account, passwd, environment, login_type}, g, {pub, key}, sig) ->
   tmus = (new Date()).getTime()
   tm = tmus // 1000
   fake = md5 account
 
-  {key, token} = ec115_encode_token tm
+  token = ec115_encode_token pub, tm, 1
 
   data = ec115_encode_data dictToForm(
     GUID: fake[0...20]
@@ -175,7 +260,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
     disk_serial: fake[0...8].toUpperCase() # harddisk serial
     dk: ''
     environment: environment
-    goto: goto
+    #goto: goto
     login_source: '115chrome'
     network: '5'
     passwd: passwd
@@ -184,6 +269,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
     # sha1(user sid (unicode)) + c volume serial + checksum
     time: tm
     login_type: login_type
+    sign115: sig_calc sig, md5 "#{account}#{tm}"
     ), key
 
   GM_xmlhttpRequest
@@ -199,14 +285,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
     onload: (response)->
       if response.status is 200
         data = new Uint8Array response.response
-        dec = data[data.length - 12 + 5]
-        unzip = data[data.length - 12 + 4]
-        data = data[0...-12]
-
-        if dec is 1
-          data = ec115_decode_aes data, key
-        if data? and unzip is 1
-          data = ec115_compress_decode data
+        data = ec115_decode data, key
 
         if data?
           json = JSON.parse bytesToString data
@@ -215,10 +294,10 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
             date.setTime date.getTime() + 7 * 24 * 3600 * 1000
             datestr = date.toGMTString()
 
-            document.cookie = "UID=#{json.data.cookie.UID}; expires=#{datestr}; path=/; domain=115.com"
-            document.cookie = "CID=#{json.data.cookie.CID}; expires=#{datestr}; path=/; domain=115.com"
-            document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
-            document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
+            unsafeWindow.document.cookie = "UID=#{json.data.cookie.UID}; expires=#{datestr}; path=/; domain=115.com"
+            unsafeWindow.document.cookie = "CID=#{json.data.cookie.CID}; expires=#{datestr}; path=/; domain=115.com"
+            unsafeWindow.document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
+            unsafeWindow.document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
 
             json.is_two = true
             delete json.data
@@ -228,10 +307,47 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g) ->
       else
         GM_log "response.status = #{response.status}"
 
+preLoginEncrypt = (n,g) ->
+  tmus = (new Date()).getTime()
+  tm = tmus // 1000
+  {pub, key} = ec115_init tm
+  token = ec115_encode_token pub, tm, 0
+
+  GM_xmlhttpRequest
+    method: 'GET'
+    url: "https://passportapi.115.com/app/2.0/web/#{g_ver}/login/sign?k_ec=#{token}"
+    responseType: 'arraybuffer'
+    anonymous: true
+    onload: (response)->
+      if response.status is 200
+        data = new Uint8Array response.response
+        data = ec115_decode data, key
+
+        if data?
+          json = JSON.parse bytesToString data
+          if json.state
+            tmp = window.atob json.sign
+            body = new Uint8Array tmp.length
+            for i in [0...tmp.length]
+              body[i] = tmp.charCodeAt i
+
+            try
+              sig = sig_init body
+
+              LoginEncrypt_ JSON.parse(n), g, {pub, key}, sig
+            catch error
+              GM_log "#{error}"
+          else
+            GM_log JSON.stringify json
+        else
+          GM_log 'data is null'
+      else
+        GM_log "response.status = #{response.status}"
+
 browserInterface = unsafeWindow.browserInterface ? {}
 browserInterface.LoginEncrypt = (n,g) ->
   try
-    LoginEncrypt_ JSON.parse(n), g
+    preLoginEncrypt n, g
   catch error
     GM_log "#{error}"
 
