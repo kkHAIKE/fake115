@@ -310,7 +310,7 @@ LoginEncrypt_ = ({account, passwd, environment, login_type}, g, {pub, key}, sig)
 preLoginEncrypt = (n,g) ->
   tmus = (new Date()).getTime()
   tm = tmus // 1000
-  {pub, key} = ec115_init tm
+  {pub, key} = ec115_init
   token = ec115_encode_token pub, tm, 0
 
   GM_xmlhttpRequest

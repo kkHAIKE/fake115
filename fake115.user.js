@@ -372,7 +372,7 @@ preLoginEncrypt = function(n, g) {
   var key, pub, tm, tmus, token, _ref;
   tmus = (new Date()).getTime();
   tm = Math.floor(tmus / 1000);
-  _ref = ec115_init(tm), pub = _ref.pub, key = _ref.key;
+  _ref = ec115_init(), pub = _ref.pub, key = _ref.key;
   token = ec115_encode_token(pub, tm, 0);
   return GM_xmlhttpRequest({
     method: 'GET',
