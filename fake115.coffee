@@ -186,7 +186,7 @@ sig_init = (body) ->
   sz = Module.ccall 'calc_out', 'number', ['number', 'number', 'number'],
     [ori_data_p, body.length, data_buf_p]
   Module._free ori_data_p
-  data_buf = new Uint8Array Module.HEAPU8.buffer, data_buf_p, sz
+  data_buf = new Uint8Array Module.buffer, data_buf_p, sz
   pSig = get_key data_buf
 
   md4h = md4_init pSig
@@ -210,7 +210,7 @@ sig_calc = ({data_buf, data_buf_p, pSig, dhash}, src) ->
   Module._free data_buf_p
   Module._free h1_p
 
-  out_data = new Uint8Array Module.HEAPU8.buffer, out_data_p, sz
+  out_data = new Uint8Array Module.buffer, out_data_p, sz
   md4h = md4_init pSig
   md4h.update out_data
   ret = md4h.digest()

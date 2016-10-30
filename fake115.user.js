@@ -230,7 +230,7 @@ sig_init = function(body) {
   data_buf_p = Module._malloc(body.length);
   sz = Module.ccall('calc_out', 'number', ['number', 'number', 'number'], [ori_data_p, body.length, data_buf_p]);
   Module._free(ori_data_p);
-  data_buf = new Uint8Array(Module.HEAPU8.buffer, data_buf_p, sz);
+  data_buf = new Uint8Array(Module.buffer, data_buf_p, sz);
   pSig = get_key(data_buf);
   md4h = md4_init(pSig);
   md4h.update(data_buf);
@@ -257,7 +257,7 @@ sig_calc = function(_arg, src) {
   sz = Module.ccall('encode', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number'], [data_buf_p, data_buf.length / 2, h1_p, 16, out_data_p, 8, 10]);
   Module._free(data_buf_p);
   Module._free(h1_p);
-  out_data = new Uint8Array(Module.HEAPU8.buffer, out_data_p, sz);
+  out_data = new Uint8Array(Module.buffer, out_data_p, sz);
   md4h = md4_init(pSig);
   md4h.update(out_data);
   ret = md4h.digest();
