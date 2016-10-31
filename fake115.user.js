@@ -304,8 +304,8 @@ dictToForm = function(dict) {
 };
 
 LoginEncrypt_ = function(_arg, g, _arg1, sig) {
-  var account, data, environment, fake, key, login_type, passwd, pub, tm, tmus, token;
-  account = _arg.account, passwd = _arg.passwd, environment = _arg.environment, login_type = _arg.login_type;
+  var account, data, environment, fake, goto, key, login_type, passwd, pub, tm, tmus, token;
+  account = _arg.account, passwd = _arg.passwd, environment = _arg.environment, goto = _arg.goto, login_type = _arg.login_type;
   pub = _arg1.pub, key = _arg1.key;
   tmus = (new Date()).getTime();
   tm = Math.floor(tmus / 1000);
@@ -354,7 +354,7 @@ LoginEncrypt_ = function(_arg, g, _arg1, sig) {
             unsafeWindow.document.cookie = "CID=" + json.data.cookie.CID + "; expires=" + datestr + "; path=/; domain=115.com";
             unsafeWindow.document.cookie = "SEID=" + json.data.cookie.SEID + "; expires=" + datestr + "; path=/; domain=115.com";
             unsafeWindow.document.cookie = "OOFL=" + json.data.user_id + "; expires=" + datestr + "; path=/; domain=115.com";
-            json.is_two = true;
+            json.goto = "" + json.goto + (encodeURIComponent(goto));
             delete json.data;
           }
           return unsafeWindow[g](JSON.stringify(json));

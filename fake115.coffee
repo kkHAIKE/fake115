@@ -244,7 +244,7 @@ dictToForm = (dict) ->
     tmp.push "#{k}=#{v}"
   return tmp.join '&'
 
-LoginEncrypt_ = ({account, passwd, environment, login_type}, g, {pub, key}, sig) ->
+LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}, sig) ->
   tmus = (new Date()).getTime()
   tm = tmus // 1000
   fake = md5 account
@@ -299,7 +299,8 @@ LoginEncrypt_ = ({account, passwd, environment, login_type}, g, {pub, key}, sig)
             unsafeWindow.document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
             unsafeWindow.document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
 
-            json.is_two = true
+            #json.is_two = true
+            json.goto = "#{json.goto}#{encodeURIComponent(goto)}"
             delete json.data
           unsafeWindow[g] JSON.stringify json
         else
@@ -310,7 +311,7 @@ LoginEncrypt_ = ({account, passwd, environment, login_type}, g, {pub, key}, sig)
 preLoginEncrypt = (n,g) ->
   tmus = (new Date()).getTime()
   tm = tmus // 1000
-  {pub, key} = ec115_init
+  {pub, key} = ec115_init()
   token = ec115_encode_token pub, tm, 0
 
   GM_xmlhttpRequest
