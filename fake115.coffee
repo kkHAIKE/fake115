@@ -1,8 +1,8 @@
 `// ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.2
-// @description  非115浏览器登录115.com
+// @version      1.3
+// @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
 // @grant        GM_xmlhttpRequest
@@ -10,6 +10,8 @@
 // @grant        GM_log
 // @connect      passport.115.com
 // @connect      passportapi.115.com
+// @connect      proapi.115.com
+// @connect      uplb.115.com
 // @require      http://cdn.bootcss.com/crc-32/0.4.1/crc32.min.js
 // @require      http://cdn.bootcss.com/blueimp-md5/2.3.0/js/md5.min.js
 // @require      https://rawgit.com/ricmoo/aes-js/master/index.js
@@ -22,6 +24,7 @@
 // @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
 // @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
 // @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
+// @require      http://cdn.bootcss.com/jsSHA/2.2.0/sha1.js
 // @run-at       document-start
 // ==/UserScript==
 (function() {
@@ -353,5 +356,139 @@ browserInterface.LoginEncrypt = (n,g) ->
     GM_log "#{error}"
 
 unsafeWindow.browserInterface = cloneInto browserInterface, unsafeWindow, {cloneFunctions: true}
+
+unsafeWindow.document.addEventListener 'DOMContentLoaded', ->
+  try
+    js_top_panel_box = unsafeWindow.document.getElementById 'js_top_panel_box'
+    if js_top_panel_box?
+      cont = document.createElement 'div'
+      finput = document.createElement 'input'
+      finput.setAttribute 'type', 'file'
+      procLabel = document.createElement 'span'
+      cont.appendChild finput
+      cont.appendChild procLabel
+      js_top_panel_box.appendChild cont
+
+      cont.style.position = 'absolute'
+      cont.style.top = '20px'
+      cont.style.left = '80px'
+
+      fastSig = (userid, fileid, target, userkey) ->
+        sha1 = new jsSHA 'SHA-1', 'TEXT'
+        sha1.update "#{userid}#{fileid}#{target}0"
+        tmp = sha1.getHash 'HEX'
+        sha1 = new jsSHA 'SHA-1', 'TEXT'
+        sha1.update "#{userkey}#{tmp}000000"
+        return sha1.getHash 'HEX', {outputUpper: true}
+
+      uploadinfo = null
+      fastUpload = ({fileid, preid, filename, filesize}) ->
+        tmus = (new Date()).getTime()
+        tm = tmus // 1000
+
+        GM_xmlhttpRequest
+          method: 'POST'
+          url: uploadinfo.url_upload + '?' + dictToQuery
+            appid: 0
+            appfrom: 10
+            appversion: '2.0.0.0'
+            format: 'json'
+            isp: 0
+            sig: fastSig uploadinfo.user_id, fileid, 'U_1_0', uploadinfo.userkey
+            t: tm
+          data: dictToForm
+            api_version: '2.0.0.0'
+            fileid: fileid
+            filename: filename
+            filesize: filesize
+            preid: preid
+            target: 'U_1_0'
+            userid: uploadinfo.user_id
+          responseType: 'json'
+          headers:
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          onload: (response)->
+            if response.status is 200
+              if response.response.status is 2
+                alert 'fastupload OK, refresh window and goto root folder to find it'
+              else
+                alert 'fastupload FAIL, LOL'
+            else
+              GM_log "response.status = #{response.status}"
+
+      getUserKey = (param) ->
+        GM_xmlhttpRequest
+          method: 'GET'
+          url: 'http://proapi.115.com/app/uploadinfo'
+          responseType: 'json'
+          onload: (response)->
+            if response.status is 200
+              uploadinfo = response.response
+
+              fastUpload param
+
+            else
+              GM_log "response.status = #{response.status}"
+
+      finput.onchange = (e)->
+        return if e.target.files.length is 0
+        f = e.target.files[0]
+
+        if f.size < 128 * 1024
+          alert 'file size less than 128K'
+          return
+
+        PSIZE = 1 * 1024 * 1024
+        npart = (f.size + PSIZE - 1) // PSIZE
+
+        allSha1 = new jsSHA 'SHA-1', 'ARRAYBUFFER'
+        preid = ''
+
+        finalPart = ->
+          fileid = allSha1.getHash 'HEX', {outputUpper: true}
+          param = {fileid, preid, filename: f.name, filesize: f.size}
+
+          if uploadinfo?
+            fastUpload param
+          else
+            getUserKey param
+
+        nextPart = (n) ->
+          reader = new FileReader()
+          b = f[n * PSIZE ... if (n + 1) * PSIZE > f.size then f.size else (n + 1) * PSIZE]
+
+          reader.onerror = (e) ->
+            GM_log "#{e.target.error}"
+
+          reader.onload = (e) ->
+            data = new Uint8Array e.target.result
+
+            if n is 0
+              sha1 = new jsSHA 'SHA-1', 'ARRAYBUFFER'
+              sha1.update data[0...128 * 1024]
+              preid = sha1.getHash 'HEX', {outputUpper: true}
+            allSha1.update data
+
+            procLabel.textContent = "(#{(n + 1) * 100 // npart}%)"
+
+            if n is npart - 1
+              finalPart()
+            else
+              nextPart n + 1
+
+          reader.readAsArrayBuffer b
+
+        nextPart 0
+
+    if unsafeWindow.UPLOAD_CONFIG_H5?
+      fakeSizeLimitGetter = ->
+        return 115 * 1024 * 1024 * 1024
+      if Object.defineProperty?
+        Object.defineProperty unsafeWindow.UPLOAD_CONFIG_H5, 'size_limit', {get: fakeSizeLimitGetter}
+      else if Object.prototype.__defineGetter__?
+        unsafeWindow.UPLOAD_CONFIG_H5.__defineGetter__ 'size_limit', fakeSizeLimitGetter
+
+  catch error
+    GM_log "#{error}"
 
 `})()`
