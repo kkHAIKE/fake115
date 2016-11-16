@@ -15,13 +15,8 @@
 // @require      http://cdn.bootcss.com/crc-32/0.4.1/crc32.min.js
 // @require      http://cdn.bootcss.com/blueimp-md5/2.3.0/js/md5.min.js
 // @require      https://rawgit.com/ricmoo/aes-js/master/index.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/jsbn.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/jsbn2.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/prng4.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/rng.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/ec.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/sec.js
-// @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
+// @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.min.js
+// @require      https://rawgit.com/indutny/elliptic/master/dist/elliptic.min.js
 // @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
 // @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
 // @require      http://cdn.bootcss.com/jsSHA/2.2.0/sha1.js
@@ -29,125 +24,86 @@
 // ==/UserScript==
 (function() {
     'use strict';
-var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToInt, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, g_Q, g_c, g_rng, g_ver, get_key, hexToBytes, intToBytes, md4_init, pick_rand, preLoginEncrypt, sig_calc, sig_init, stringToBytes, _ref;
+var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, g_ver, get_key, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
 
 g_ver = '7.2.4.37';
-
-g_rng = new SecureRandom();
-
-g_c = secp224r1();
-
-g_Q = g_c.getCurve().decodePointHex('0457A29257CD2320E5D6D143322FA4BB8A3CF9D3CC623EF5EDAC62B7678A89C91A83BA800D6129F522D034C895DD2465243ADDC250953BEEBA');
 
 Buffer = require('buffer').Buffer;
 
 LZ4 = require('lz4');
 
 stringToBytes = function(s) {
-  var i, ret, _i, _ref;
+  var i, l, ref, ret;
   ret = [];
-  for (i = _i = 0, _ref = s.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+  for (i = l = 0, ref = s.length; 0 <= ref ? l < ref : l > ref; i = 0 <= ref ? ++l : --l) {
     ret.push(s.charCodeAt(i));
   }
   return ret;
 };
 
 bytesToString = function(b) {
-  var i, ret, _i, _len;
+  var i, l, len1, ret;
   ret = '';
-  for (_i = 0, _len = b.length; _i < _len; _i++) {
-    i = b[_i];
+  for (l = 0, len1 = b.length; l < len1; l++) {
+    i = b[l];
     ret += String.fromCharCode(i);
   }
   return ret;
 };
 
-hexToBytes = function(h) {
-  var i, ret, _i, _ref;
-  ret = [];
-  for (i = _i = 0, _ref = h.length; _i < _ref; i = _i += 2) {
-    ret.push(parseInt(h.slice(i, i + 2), 16));
-  }
-  return ret;
-};
-
 bytesToHex = function(b) {
-  var ret, t, _i, _len;
+  var l, len1, ret, t;
   ret = '';
-  for (_i = 0, _len = b.length; _i < _len; _i++) {
-    t = b[_i];
+  for (l = 0, len1 = b.length; l < len1; l++) {
+    t = b[l];
     ret += (t >> 4).toString(16);
     ret += (t & 0xf).toString(16);
   }
   return ret;
 };
 
-intToBytes = function(x) {
-  var i, ret, _i;
-  ret = [];
-  for (i = _i = 0; _i < 4; i = ++_i) {
-    ret.push(x & 0xff);
-    x >>= 8;
-  }
-  return ret;
-};
-
-bytesToInt = function(b) {
-  return b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24);
-};
-
-pick_rand = function(n) {
-  var n1, r;
-  n1 = n.subtract(BigInteger.ONE);
-  r = new BigInteger(n.bitLength(), g_rng);
-  return r.mod(n1).add(BigInteger.ONE);
-};
-
 ec115_init = function() {
-  var G, K, P, c, d, pub, y;
-  d = pick_rand(g_c.getN());
-  G = g_c.getG();
-  P = G.multiply(d);
-  c = g_c.getCurve();
-  pub = c.encodePointHex(P);
-  y = P.getY().toBigInteger();
-  pub = hexToBytes("1d" + (y.testBit(0) ? "03" : "02") + pub.slice(2, 58));
-  K = g_Q.multiply(d);
+  var Q, c, key, keys, pub;
+  c = new elliptic.ec('p224');
+  keys = c.genKeyPair();
+  pub = [0x1d].concat(keys.getPublic(true, true));
+  Q = c.keyFromPublic('0457A29257CD2320E5D6D143322FA4BB8A3CF9D3CC623EF5EDAC62B7678A89C91A83BA800D6129F522D034C895DD2465243ADDC250953BEEBA'.toLowerCase(), 'hex');
+  key = (keys.derive(Q.getPublic())).toArray();
   return {
     pub: pub,
-    key: hexToBytes(K.getX().toBigInteger().toString(16))
+    key: key
   };
 };
 
 ec115_encode_token = function(pub, tm, cnt) {
-  var i, r2, tmp, tmp2, _i, _j, _k, _l;
-  r2 = new Array(2);
-  g_rng.nextBytes(r2);
-  tmp = [];
-  for (i = _i = 0; _i < 15; i = ++_i) {
-    tmp.push(pub[i] ^ r2[0]);
+  var i, l, m, o, q, r20, r21, tmp, tmp2;
+  r20 = Math.floor(Math.random() * 256);
+  r21 = Math.floor(Math.random() * 256);
+  tmp = Buffer.alloc(48);
+  for (i = l = 0; l < 15; i = ++l) {
+    tmp[i] = pub[i] ^ r20;
   }
-  tmp.push(r2[0]);
-  tmp = tmp.concat(intToBytes(115));
-  tmp = tmp.concat(intToBytes(tm));
-  for (i = _j = 16; _j < 24; i = ++_j) {
-    tmp[i] ^= r2[0];
+  tmp[15] = r20;
+  tmp.writeInt32LE(115, 16);
+  tmp.writeInt32LE(tm, 20);
+  for (i = m = 16; m < 24; i = ++m) {
+    tmp[i] ^= r20;
   }
-  for (i = _k = 15; _k < 30; i = ++_k) {
-    tmp.push(pub[i] ^ r2[1]);
+  for (i = o = 24; o < 39; i = ++o) {
+    tmp[i] = pub[i - 9] ^ r21;
   }
-  tmp.push(r2[1]);
-  tmp = tmp.concat(intToBytes(cnt));
-  for (i = _l = 40; _l < 44; i = ++_l) {
-    tmp[i] ^= r2[1];
+  tmp[39] = r21;
+  tmp.writeInt32LE(cnt, 40);
+  for (i = q = 40; q < 44; i = ++q) {
+    tmp[i] ^= r21;
   }
-  tmp2 = stringToBytes('^j>WD3Kr?J2gLFjD4W2y@').concat(tmp);
-  tmp = tmp.concat(intToBytes(CRC32.buf(tmp2) >>> 0));
-  return window.btoa(bytesToString(tmp));
+  tmp2 = Buffer.concat([Buffer.from('^j>WD3Kr?J2gLFjD4W2y@'), tmp.slice(0, 44)]);
+  tmp.writeInt32LE(CRC32.buf(tmp2), 44);
+  return tmp.toString('base64');
 };
 
 ec115_encode_data = function(data, key) {
-  var aesEcb, i, j, k, key1, key2, n, part, ret, tmp, _i;
+  var aesEcb, i, j, k, key1, key2, l, n, part, ret, tmp;
   key1 = key.slice(0, 16);
   key2 = key.slice(-16);
   aesEcb = new aesjs.ModeOfOperation.ecb(key1);
@@ -157,7 +113,7 @@ ec115_encode_data = function(data, key) {
   ret = [];
   while (n > 0) {
     part = [];
-    for (i = _i = 0; _i < 16; i = ++_i) {
+    for (i = l = 0; l < 16; i = ++l) {
       k = n <= 0 ? 0 : tmp[i + j];
       part.push(key2[i] ^ k);
       --n;
@@ -178,36 +134,35 @@ ec115_decode_aes = function(data, key) {
   while (ret.length > 0 && ret[ret.length - 1] === 0) {
     ret.pop();
   }
-  return ret;
+  return Buffer.from(ret);
 };
 
 ec115_compress_decode = function(data) {
-  var len, p, r, ret, tmp;
-  data = new Buffer(data);
+  var len, p, r, rets, tmp;
   p = 0;
-  ret = [];
+  rets = [];
   while (p < data.length) {
     len = data.readInt16LE(p) + 2;
     if (p + len > data.length) {
       return null;
     }
-    tmp = new Buffer(0x2000);
+    tmp = Buffer.alloc(0x2000);
     r = LZ4.decodeBlock(data.slice(p + 2, p + len), tmp);
     if (r < 0) {
       return null;
     }
-    ret = ret.concat(Array.from(tmp.slice(0, r)));
+    rets.push(tmp.slice(0, r));
     p += len;
   }
-  return ret;
+  return Buffer.concat(rets);
 };
 
 get_key = function(data_buf) {
-  var i, p, ret, t, _i;
+  var i, l, p, ret, t;
   p = 0;
-  ret = new Uint8Array(40);
-  for (i = _i = 0; _i < 40; i = ++_i) {
-    t = bytesToInt(data_buf.slice(p, p + 4));
+  ret = Buffer.alloc(40);
+  for (i = l = 0; l < 40; i = ++l) {
+    t = data_buf.readInt32LE(p);
     p = t + 1;
     ret[i] = data_buf[t];
   }
@@ -215,13 +170,12 @@ get_key = function(data_buf) {
 };
 
 md4_init = function(pSig) {
-  var pSig_32, ret;
+  var ret;
   ret = md4.create();
-  pSig_32 = new Int32Array(pSig.buffer);
-  ret.h0 = pSig_32[1];
-  ret.h1 = pSig_32[2];
-  ret.h2 = pSig_32[3];
-  ret.h3 = pSig_32[4];
+  ret.h0 = pSig.readInt32LE(4);
+  ret.h1 = pSig.readInt32LE(8);
+  ret.h2 = pSig.readInt32LE(12);
+  ret.h3 = pSig.readInt32LE(16);
   ret.first = false;
   return ret;
 };
@@ -233,7 +187,7 @@ sig_init = function(body) {
   data_buf_p = Module._malloc(body.length);
   sz = Module.ccall('calc_out', 'number', ['number', 'number', 'number'], [ori_data_p, body.length, data_buf_p]);
   Module._free(ori_data_p);
-  data_buf = new Uint8Array(Module.buffer, data_buf_p, sz);
+  data_buf = Buffer.from(Module.buffer, data_buf_p, sz);
   pSig = get_key(data_buf);
   md4h = md4_init(pSig);
   md4h.update(data_buf);
@@ -246,9 +200,9 @@ sig_init = function(body) {
   };
 };
 
-sig_calc = function(_arg, src) {
-  var data_buf, data_buf_p, dhash, h1, h1_p, i, md4h, out_data, out_data_p, pSig, ret, sz, _i;
-  data_buf = _arg.data_buf, data_buf_p = _arg.data_buf_p, pSig = _arg.pSig, dhash = _arg.dhash;
+sig_calc = function(arg, src) {
+  var data_buf, data_buf_p, dhash, h1, h1_p, i, l, md4h, out_data, out_data_p, pSig, ret, sz;
+  data_buf = arg.data_buf, data_buf_p = arg.data_buf_p, pSig = arg.pSig, dhash = arg.dhash;
   md4h = md4_init(pSig);
   md4h.update(dhash);
   md4h.update(src);
@@ -266,7 +220,7 @@ sig_calc = function(_arg, src) {
   ret = md4h.digest();
   Module._free(out_data_p);
   ret.push(pSig[0]);
-  for (i = _i = 36; _i < 40; i = ++_i) {
+  for (i = l = 36; l < 40; i = ++l) {
     ret.push(pSig[i]);
   }
   return bytesToHex(ret);
@@ -291,7 +245,7 @@ dictToQuery = function(dict) {
   tmp = [];
   for (k in dict) {
     v = dict[k];
-    tmp.push("" + (encodeURIComponent(k)) + "=" + (encodeURIComponent(v)));
+    tmp.push((encodeURIComponent(k)) + "=" + (encodeURIComponent(v)));
   }
   return tmp.join('&');
 };
@@ -301,15 +255,15 @@ dictToForm = function(dict) {
   tmp = [];
   for (k in dict) {
     v = dict[k];
-    tmp.push("" + k + "=" + v);
+    tmp.push(k + "=" + v);
   }
   return tmp.join('&');
 };
 
-LoginEncrypt_ = function(_arg, g, _arg1, sig) {
+LoginEncrypt_ = function(arg, g, arg1, sig) {
   var account, data, environment, fake, goto, key, login_type, passwd, pub, tm, tmus, token;
-  account = _arg.account, passwd = _arg.passwd, environment = _arg.environment, goto = _arg.goto, login_type = _arg.login_type;
-  pub = _arg1.pub, key = _arg1.key;
+  account = arg.account, passwd = arg.passwd, environment = arg.environment, goto = arg.goto, login_type = arg.login_type;
+  pub = arg1.pub, key = arg1.key;
   tmus = (new Date()).getTime();
   tm = Math.floor(tmus / 1000);
   fake = md5(account);
@@ -345,10 +299,10 @@ LoginEncrypt_ = function(_arg, g, _arg1, sig) {
     onload: function(response) {
       var date, datestr, json;
       if (response.status === 200) {
-        data = new Uint8Array(response.response);
+        data = Buffer.from(response.response);
         data = ec115_decode(data, key);
         if (data != null) {
-          json = JSON.parse(bytesToString(data));
+          json = JSON.parse(data.toString('latin1'));
           if (json.state) {
             date = new Date();
             date.setTime(date.getTime() + 7 * 24 * 3600 * 1000);
@@ -372,10 +326,10 @@ LoginEncrypt_ = function(_arg, g, _arg1, sig) {
 };
 
 preLoginEncrypt = function(n, g) {
-  var key, pub, tm, tmus, token, _ref;
+  var key, pub, ref, tm, tmus, token;
   tmus = (new Date()).getTime();
   tm = Math.floor(tmus / 1000);
-  _ref = ec115_init(), pub = _ref.pub, key = _ref.key;
+  ref = ec115_init(), pub = ref.pub, key = ref.key;
   token = ec115_encode_token(pub, tm, 0);
   return GM_xmlhttpRequest({
     method: 'GET',
@@ -383,26 +337,22 @@ preLoginEncrypt = function(n, g) {
     responseType: 'arraybuffer',
     anonymous: true,
     onload: function(response) {
-      var body, data, error, i, json, sig, tmp, _i, _ref1;
+      var body, data, error, error1, json, sig;
       if (response.status === 200) {
-        data = new Uint8Array(response.response);
+        data = Buffer.from(response.response);
         data = ec115_decode(data, key);
         if (data != null) {
-          json = JSON.parse(bytesToString(data));
+          json = JSON.parse(data.toString('latin1'));
           if (json.state) {
-            tmp = window.atob(json.sign);
-            body = new Uint8Array(tmp.length);
-            for (i = _i = 0, _ref1 = tmp.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
-              body[i] = tmp.charCodeAt(i);
-            }
+            body = Buffer.from(json.sign, 'base64');
             try {
               sig = sig_init(body);
               return LoginEncrypt_(JSON.parse(n), g, {
                 pub: pub,
                 key: key
               }, sig);
-            } catch (_error) {
-              error = _error;
+            } catch (error1) {
+              error = error1;
               return GM_log("" + error);
             }
           } else {
@@ -418,14 +368,14 @@ preLoginEncrypt = function(n, g) {
   });
 };
 
-browserInterface = (_ref = unsafeWindow.browserInterface) != null ? _ref : {};
+browserInterface = (ref = unsafeWindow.browserInterface) != null ? ref : {};
 
 browserInterface.LoginEncrypt = function(n, g) {
-  var error;
+  var error, error1;
   try {
     return preLoginEncrypt(n, g);
-  } catch (_error) {
-    error = _error;
+  } catch (error1) {
+    error = error1;
     return GM_log("" + error);
   }
 };
@@ -435,7 +385,7 @@ unsafeWindow.browserInterface = cloneInto(browserInterface, unsafeWindow, {
 });
 
 unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
-  var cont, error, fakeSizeLimitGetter, fastSig, fastUpload, finput, getUserKey, js_top_panel_box, procLabel, uploadinfo;
+  var cont, error, error1, fakeSizeLimitGetter, fastSig, fastUpload, finput, getUserKey, js_top_panel_box, procLabel, uploadinfo;
   try {
     js_top_panel_box = unsafeWindow.document.getElementById('js_top_panel_box');
     if (js_top_panel_box != null) {
@@ -461,9 +411,9 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
         });
       };
       uploadinfo = null;
-      fastUpload = function(_arg) {
+      fastUpload = function(arg) {
         var fileid, filename, filesize, preid, tm, tmus;
-        fileid = _arg.fileid, preid = _arg.preid, filename = _arg.filename, filesize = _arg.filesize;
+        fileid = arg.fileid, preid = arg.preid, filename = arg.filename, filesize = arg.filesize;
         tmus = (new Date()).getTime();
         tm = Math.floor(tmus / 1000);
         return GM_xmlhttpRequest({
@@ -591,8 +541,8 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
         return unsafeWindow.UPLOAD_CONFIG_H5.__defineGetter__('size_limit', fakeSizeLimitGetter);
       }
     }
-  } catch (_error) {
-    error = _error;
+  } catch (error1) {
+    error = error1;
     return GM_log("" + error);
   }
 });

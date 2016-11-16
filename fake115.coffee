@@ -15,13 +15,8 @@
 // @require      http://cdn.bootcss.com/crc-32/0.4.1/crc32.min.js
 // @require      http://cdn.bootcss.com/blueimp-md5/2.3.0/js/md5.min.js
 // @require      https://rawgit.com/ricmoo/aes-js/master/index.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/jsbn.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/jsbn2.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/prng4.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/rng.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/ec.js
-// @require      http://www-cs-students.stanford.edu/~tjw/jsbn/sec.js
-// @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.js
+// @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.min.js
+// @require      https://rawgit.com/indutny/elliptic/master/dist/elliptic.min.js
 // @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
 // @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
 // @require      http://cdn.bootcss.com/jsSHA/2.2.0/sha1.js
@@ -30,10 +25,6 @@
 (function() {
     'use strict'`
 g_ver = '7.2.4.37'
-
-g_rng = new SecureRandom()
-g_c = secp224r1()
-g_Q = g_c.getCurve().decodePointHex '0457A29257CD2320E5D6D143322FA4BB8A3CF9D3CC623EF5EDAC62B7678A89C91A83BA800D6129F522D034C895DD2465243ADDC250953BEEBA'
 
 Buffer = require('buffer').Buffer
 LZ4 = require 'lz4'
@@ -50,12 +41,6 @@ bytesToString = (b) ->
     ret += String.fromCharCode i
   return ret
 
-hexToBytes = (h) ->
-  ret = []
-  for i in [0...h.length] by 2
-    ret.push parseInt h[i...i + 2], 16
-  return ret
-
 bytesToHex = (b) ->
   ret = ''
   for t in b
@@ -63,56 +48,37 @@ bytesToHex = (b) ->
     ret += (t & 0xf).toString 16
   return ret
 
-intToBytes = (x) ->
-  ret = []
-  for i in [0...4]
-    ret.push x & 0xff
-    x >>= 8
-  return ret
-
-bytesToInt = (b) ->
-  return b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24)
-
-pick_rand = (n) ->
-  n1 = n.subtract BigInteger.ONE
-  r = new BigInteger n.bitLength(), g_rng
-  r.mod(n1).add BigInteger.ONE
-
 ec115_init = ->
-  d = pick_rand g_c.getN()
-  G = g_c.getG()
-  P = G.multiply d
-  c = g_c.getCurve()
-  pub = c.encodePointHex P
-  y = P.getY().toBigInteger()
-  pub = hexToBytes "1d#{if y.testBit(0) then "03" else "02"}#{pub[2...58]}"
-
-  K = g_Q.multiply d
-  return {pub, key: hexToBytes K.getX().toBigInteger().toString 16}
+  c = new elliptic.ec 'p224'
+  keys = c.genKeyPair()
+  pub = [0x1d].concat keys.getPublic true, true
+  Q = c.keyFromPublic '0457A29257CD2320E5D6D143322FA4BB8A3CF9D3CC623EF5EDAC62B7678A89C91A83BA800D6129F522D034C895DD2465243ADDC250953BEEBA'.toLowerCase(), 'hex'
+  key = (keys.derive Q.getPublic()).toArray()
+  return {pub, key}
 
 ec115_encode_token = (pub, tm, cnt) ->
-  r2 = new Array 2
-  g_rng.nextBytes r2
+  r20 = Math.floor Math.random() * 256;
+  r21 = Math.floor Math.random() * 256;
 
-  tmp = []
+  tmp = Buffer.alloc 48
   for i in [0...15]
-    tmp.push pub[i] ^ r2[0]
-  tmp.push r2[0]
-  tmp = tmp.concat intToBytes 115
-  tmp = tmp.concat intToBytes tm
+    tmp[i] = pub[i] ^ r20
+  tmp[15] = r20
+  tmp.writeInt32LE 115, 16
+  tmp.writeInt32LE tm, 20
   for i in [16...24]
-    tmp[i] ^= r2[0]
-  for i in [15...30]
-    tmp.push pub[i] ^ r2[1]
-  tmp.push r2[1]
-  tmp = tmp.concat intToBytes cnt
+    tmp[i] ^= r20
+  for i in [24...39]
+    tmp[i] = pub[i - 9] ^ r21
+  tmp[39] = r21
+  tmp.writeInt32LE cnt, 40
   for i in [40...44]
-    tmp[i] ^= r2[1]
+    tmp[i] ^= r21
 
-  tmp2 = stringToBytes('^j>WD3Kr?J2gLFjD4W2y@').concat tmp
-  tmp = tmp.concat intToBytes CRC32.buf(tmp2) >>> 0
+  tmp2 = Buffer.concat [Buffer.from('^j>WD3Kr?J2gLFjD4W2y@'), tmp[0...44]]
+  tmp.writeInt32LE CRC32.buf(tmp2), 44
 
-  return window.btoa bytesToString tmp
+  return tmp.toString 'base64'
 
 ec115_encode_data = (data, key) ->
   key1 = key[0...16]
@@ -145,40 +111,38 @@ ec115_decode_aes = (data, key) ->
 
   while ret.length > 0 and ret[ret.length - 1] is 0
     ret.pop()
-  return ret
+  return Buffer.from ret
 
 ec115_compress_decode = (data) ->
-  data = new Buffer data
   p = 0
-  ret = []
+  rets = []
   while p < data.length
     len = data.readInt16LE(p) + 2
     return null if p + len > data.length
 
-    tmp = new Buffer 0x2000
+    tmp = Buffer.alloc 0x2000
     r = LZ4.decodeBlock data[p + 2...p + len], tmp
     return null if r < 0
 
-    ret = ret.concat Array.from tmp[0...r]
+    rets.push tmp[0...r]
     p += len
-  return ret
+  return Buffer.concat rets
 
 get_key = (data_buf) ->
   p = 0
-  ret = new Uint8Array 40
+  ret = Buffer.alloc 40
   for i in [0...40]
-    t = bytesToInt data_buf[p...p + 4]
+    t = data_buf.readInt32LE p
     p = t + 1
     ret[i] = data_buf[t]
   return ret
 
 md4_init = (pSig) ->
   ret = md4.create()
-  pSig_32 = new Int32Array pSig.buffer
-  ret.h0 = pSig_32[1]
-  ret.h1 = pSig_32[2]
-  ret.h2 = pSig_32[3]
-  ret.h3 = pSig_32[4]
+  ret.h0 = pSig.readInt32LE 4
+  ret.h1 = pSig.readInt32LE 8
+  ret.h2 = pSig.readInt32LE 12
+  ret.h3 = pSig.readInt32LE 16
   ret.first = false
   return ret
 
@@ -189,7 +153,7 @@ sig_init = (body) ->
   sz = Module.ccall 'calc_out', 'number', ['number', 'number', 'number'],
     [ori_data_p, body.length, data_buf_p]
   Module._free ori_data_p
-  data_buf = new Uint8Array Module.buffer, data_buf_p, sz
+  data_buf = Buffer.from Module.buffer, data_buf_p, sz
   pSig = get_key data_buf
 
   md4h = md4_init pSig
@@ -287,11 +251,11 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
     anonymous: true
     onload: (response)->
       if response.status is 200
-        data = new Uint8Array response.response
+        data = Buffer.from response.response
         data = ec115_decode data, key
 
         if data?
-          json = JSON.parse bytesToString data
+          json = JSON.parse data.toString 'latin1'
           if json.state
             date = new Date()
             date.setTime date.getTime() + 7 * 24 * 3600 * 1000
@@ -324,16 +288,13 @@ preLoginEncrypt = (n,g) ->
     anonymous: true
     onload: (response)->
       if response.status is 200
-        data = new Uint8Array response.response
+        data = Buffer.from response.response
         data = ec115_decode data, key
 
         if data?
-          json = JSON.parse bytesToString data
+          json = JSON.parse data.toString 'latin1'
           if json.state
-            tmp = window.atob json.sign
-            body = new Uint8Array tmp.length
-            for i in [0...tmp.length]
-              body[i] = tmp.charCodeAt i
+            body = Buffer.from json.sign, 'base64'
 
             try
               sig = sig_init body
