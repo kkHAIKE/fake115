@@ -256,15 +256,15 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
 
         if data?
           json = JSON.parse data.toString 'latin1'
-          if json.state
+          if json.state and json.data?
             date = new Date()
             date.setTime date.getTime() + 7 * 24 * 3600 * 1000
             datestr = date.toGMTString()
 
-            unsafeWindow.document.cookie = "UID=#{json.data.cookie.UID}; expires=#{datestr}; path=/; domain=115.com"
-            unsafeWindow.document.cookie = "CID=#{json.data.cookie.CID}; expires=#{datestr}; path=/; domain=115.com"
-            unsafeWindow.document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
-            unsafeWindow.document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
+            document.cookie = "UID=#{json.data.cookie.UID}; expires=#{datestr}; path=/; domain=115.com"
+            document.cookie = "CID=#{json.data.cookie.CID}; expires=#{datestr}; path=/; domain=115.com"
+            document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
+            document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
 
             #json.is_two = true
             json.goto = "#{json.goto}#{encodeURIComponent(goto)}"
