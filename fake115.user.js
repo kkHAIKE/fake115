@@ -295,7 +295,6 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
     },
-    anonymous: true,
     onload: function(response) {
       var date, datestr, json;
       if (response.status === 200) {

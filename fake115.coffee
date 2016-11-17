@@ -248,7 +248,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
     #overrideMimeType: 'text\/plain; charset=x-user-defined'
     headers:
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-    anonymous: true
+    #anonymous: true
     onload: (response)->
       if response.status is 200
         data = Buffer.from response.response
@@ -266,7 +266,6 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
             document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
             document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
 
-            #json.is_two = true
             json.goto = "#{json.goto}#{encodeURIComponent(goto)}"
             delete json.data
           unsafeWindow[g] JSON.stringify json
