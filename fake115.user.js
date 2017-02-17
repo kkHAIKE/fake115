@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3
+// @version      1.3.1
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
