@@ -26,7 +26,7 @@
     'use strict';
 var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, g_ver, get_key, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
 
-g_ver = '7.2.4.37';
+g_ver = '8.0.0.52';
 
 Buffer = require('buffer').Buffer;
 
@@ -103,38 +103,39 @@ ec115_encode_token = function(pub, tm, cnt) {
 };
 
 ec115_encode_data = function(data, key) {
-  var aesEcb, i, j, k, key1, key2, l, n, part, ret, tmp;
+  var aesEcb, i, j, k, key1, key2, l, n, part, rets, tmp;
   key1 = key.slice(0, 16);
   key2 = key.slice(-16);
   aesEcb = new aesjs.ModeOfOperation.ecb(key1);
   tmp = stringToBytes(data);
   n = tmp.length;
   j = 0;
-  ret = [];
+  rets = [];
   while (n > 0) {
-    part = [];
+    part = Buffer.alloc(16);
     for (i = l = 0; l < 16; i = ++l) {
       k = n <= 0 ? 0 : tmp[i + j];
-      part.push(key2[i] ^ k);
+      part[i] = key2[i] ^ k;
       --n;
     }
     key2 = aesEcb.encrypt(part);
-    ret = ret.concat(key2);
+    rets.push(Buffer.from(key2));
     j += 16;
   }
-  return bytesToString(ret);
+  return Buffer.concat(rets).toString('latin1');
 };
 
 ec115_decode_aes = function(data, key) {
-  var aesCbc, iv, key1, ret;
+  var aesCbc, i, iv, key1, ret;
   key1 = key.slice(0, 16);
   iv = key.slice(-16);
   aesCbc = new aesjs.ModeOfOperation.cbc(key1, iv);
   ret = aesCbc.decrypt(data);
-  while (ret.length > 0 && ret[ret.length - 1] === 0) {
-    ret.pop();
+  i = ret.length;
+  while (i > 0 && ret[i - 1] === 0) {
+    --i;
   }
-  return Buffer.from(ret);
+  return Buffer.from(ret.buffer, ret.byteOffset, i);
 };
 
 ec115_compress_decode = function(data) {
@@ -271,12 +272,13 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
   data = ec115_encode_data(dictToForm({
     GUID: fake.slice(0, 20),
     account: account,
-    device: 'jujumao',
-    device_id: fake.slice(0, 12).toUpperCase(),
+    device: 'ylmf',
+    device_id: fake.slice(1, 13).toUpperCase(),
     device_type: 'windows',
     disk_serial: fake.slice(0, 8).toUpperCase(),
     dk: '',
     environment: environment,
+    goto: goto,
     login_source: '115chrome',
     network: '5',
     passwd: passwd,
@@ -310,7 +312,6 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
             document.cookie = "CID=" + json.data.cookie.CID + "; expires=" + datestr + "; path=/; domain=115.com";
             document.cookie = "SEID=" + json.data.cookie.SEID + "; expires=" + datestr + "; path=/; domain=115.com";
             document.cookie = "OOFL=" + json.data.user_id + "; expires=" + datestr + "; path=/; domain=115.com";
-            json.goto = "" + json.goto + (encodeURIComponent(goto));
             delete json.data;
           }
           return unsafeWindow[g](JSON.stringify(json));
@@ -336,7 +337,7 @@ preLoginEncrypt = function(n, g) {
     responseType: 'arraybuffer',
     anonymous: true,
     onload: function(response) {
-      var body, data, error, error1, json, sig;
+      var body, data, error, json, sig;
       if (response.status === 200) {
         data = Buffer.from(response.response);
         data = ec115_decode(data, key);
@@ -352,7 +353,7 @@ preLoginEncrypt = function(n, g) {
               }, sig);
             } catch (error1) {
               error = error1;
-              return GM_log("" + error);
+              return GM_log("" + error.stack);
             }
           } else {
             return GM_log(JSON.stringify(json));
@@ -370,12 +371,12 @@ preLoginEncrypt = function(n, g) {
 browserInterface = (ref = unsafeWindow.browserInterface) != null ? ref : {};
 
 browserInterface.LoginEncrypt = function(n, g) {
-  var error, error1;
+  var error;
   try {
     return preLoginEncrypt(n, g);
   } catch (error1) {
     error = error1;
-    return GM_log("" + error);
+    return GM_log("" + error.stack);
   }
 };
 
@@ -384,7 +385,7 @@ unsafeWindow.browserInterface = cloneInto(browserInterface, unsafeWindow, {
 });
 
 unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
-  var cont, error, error1, fakeSizeLimitGetter, fastSig, fastUpload, finput, getUserKey, js_top_panel_box, procLabel, uploadinfo;
+  var cont, error, fakeSizeLimitGetter, fastSig, fastUpload, finput, getUserKey, js_top_panel_box, procLabel, uploadinfo;
   try {
     js_top_panel_box = unsafeWindow.document.getElementById('js_top_panel_box');
     if (js_top_panel_box != null) {
@@ -542,7 +543,7 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
     }
   } catch (error1) {
     error = error1;
-    return GM_log("" + error);
+    return GM_log("" + error.stack);
   }
 });
 

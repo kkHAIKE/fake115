@@ -24,7 +24,7 @@
 // ==/UserScript==
 (function() {
     'use strict'`
-g_ver = '7.2.4.37'
+g_ver = '8.0.0.52'
 
 Buffer = require('buffer').Buffer
 LZ4 = require 'lz4'
@@ -88,19 +88,19 @@ ec115_encode_data = (data, key) ->
 
   n = tmp.length
   j = 0
-  ret = []
+  rets = []
   while n > 0
-    part = []
+    part = Buffer.alloc 16
     for i in [0...16]
       k = if n <= 0 then 0 else tmp[i + j]
-      part.push key2[i] ^ k
+      part[i] = key2[i] ^ k
       --n
 
     key2 = aesEcb.encrypt part
-    ret = ret.concat key2
+    rets.push Buffer.from key2
 
     j += 16
-  bytesToString ret
+  return Buffer.concat(rets).toString 'latin1'
 
 ec115_decode_aes = (data, key) ->
   key1 = key[0...16]
@@ -109,9 +109,10 @@ ec115_decode_aes = (data, key) ->
   aesCbc = new aesjs.ModeOfOperation.cbc key1, iv
   ret = aesCbc.decrypt data
 
-  while ret.length > 0 and ret[ret.length - 1] is 0
-    ret.pop()
-  return Buffer.from ret
+  i = ret.length
+  while i > 0 and ret[i - 1] is 0
+    --i
+  return Buffer.from ret.buffer, ret.byteOffset, i
 
 ec115_compress_decode = (data) ->
   p = 0
@@ -221,13 +222,13 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
   data = ec115_encode_data dictToForm(
     GUID: fake[0...20]
     account: account
-    device: 'jujumao' # hostname
-    device_id: fake[0...12].toUpperCase() # mac
+    device: 'ylmf' # hostname
+    device_id: fake[1...13].toUpperCase() # mac
     device_type: 'windows'
     disk_serial: fake[0...8].toUpperCase() # harddisk serial
     dk: ''
     environment: environment
-    #goto: goto
+    goto: goto
     login_source: '115chrome'
     network: '5'
     passwd: passwd
@@ -266,7 +267,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
             document.cookie = "SEID=#{json.data.cookie.SEID}; expires=#{datestr}; path=/; domain=115.com"
             document.cookie = "OOFL=#{json.data.user_id}; expires=#{datestr}; path=/; domain=115.com"
 
-            json.goto = "#{json.goto}#{encodeURIComponent(goto)}"
+            #json.goto = "#{json.goto}#{encodeURIComponent(goto)}"
             delete json.data
           unsafeWindow[g] JSON.stringify json
         else
@@ -300,7 +301,7 @@ preLoginEncrypt = (n,g) ->
 
               LoginEncrypt_ JSON.parse(n), g, {pub, key}, sig
             catch error
-              GM_log "#{error}"
+              GM_log "#{error.stack}"
           else
             GM_log JSON.stringify json
         else
@@ -313,7 +314,7 @@ browserInterface.LoginEncrypt = (n,g) ->
   try
     preLoginEncrypt n, g
   catch error
-    GM_log "#{error}"
+    GM_log "#{error.stack}"
 
 unsafeWindow.browserInterface = cloneInto browserInterface, unsafeWindow, {cloneFunctions: true}
 
@@ -449,6 +450,6 @@ unsafeWindow.document.addEventListener 'DOMContentLoaded', ->
         unsafeWindow.UPLOAD_CONFIG_H5.__defineGetter__ 'size_limit', fakeSizeLimitGetter
 
   catch error
-    GM_log "#{error}"
+    GM_log "#{error.stack}"
 
 `})()`
