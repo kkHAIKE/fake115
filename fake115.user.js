@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3.1
+// @version      1.3.2
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
@@ -272,7 +272,7 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
   data = ec115_encode_data(dictToForm({
     GUID: fake.slice(0, 20),
     account: account,
-    device: 'ylmf',
+    device: 'DEEPIN',
     device_id: fake.slice(1, 13).toUpperCase(),
     device_type: 'windows',
     disk_serial: fake.slice(0, 8).toUpperCase(),
