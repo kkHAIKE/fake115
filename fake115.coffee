@@ -1,7 +1,7 @@
 `// ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3.2
+// @version      1.3.3
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
@@ -332,7 +332,7 @@ unsafeWindow.document.addEventListener 'DOMContentLoaded', ->
 
       cont.style.position = 'absolute'
       cont.style.top = '20px'
-      cont.style.left = '80px'
+      cont.style.left = '280px'
 
       fastSig = (userid, fileid, target, userkey) ->
         sha1 = new jsSHA 'SHA-1', 'TEXT'
