@@ -1,7 +1,7 @@
 `// ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3.3
+// @version      1.3.4
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
@@ -20,11 +20,12 @@
 // @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
 // @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
 // @require      http://cdn.bootcss.com/jsSHA/2.2.0/sha1.js
+// @require      https://rawgit.com/pierrec/js-xxhash/master/build/xxhash.min.js
 // @run-at       document-start
 // ==/UserScript==
 (function() {
     'use strict'`
-g_ver = '8.0.0.52'
+g_ver = '8.3.0.25'
 
 Buffer = require('buffer').Buffer
 LZ4 = require 'lz4'
@@ -163,9 +164,17 @@ sig_init = (body) ->
   return {data_buf, data_buf_p, pSig, dhash}
 
 sig_calc = ({data_buf, data_buf_p, pSig, dhash}, src) ->
+  xxh = XXH.h64()
+  xxh.init pSig.readUInt32LE 8
+  xxh.update src
+  h2 = xxh.digest().toString(16)
+  pad = '0000000000000000'
+  h2b = Buffer.from(pad[0...16 - h2.length] + h2, 'hex').swap64()
+
   md4h = md4_init pSig
   md4h.update dhash
   md4h.update src
+  md4h.update h2b
   md4h.update pSig
   h1 = new Uint8Array md4h.buffer()
 
@@ -222,8 +231,8 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
   data = ec115_encode_data dictToForm(
     GUID: fake[0...20]
     account: account
-    device: 'DEEPIN' # hostname
-    device_id: fake[1...13].toUpperCase() # mac
+    device: 'GhostXP' # hostname
+    device_id: fake[2...14].toUpperCase() # mac
     device_type: 'windows'
     disk_serial: fake[0...8].toUpperCase() # harddisk serial
     dk: ''
@@ -237,6 +246,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
     # sha1(user sid (unicode)) + c volume serial + checksum
     time: tm
     login_type: login_type
+    signew: 1
     sign115: sig_calc sig, md5 "#{account}#{tm}"
     ), key
 

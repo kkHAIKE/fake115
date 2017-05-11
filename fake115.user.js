@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3.3
+// @version      1.3.4
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
@@ -20,13 +20,14 @@
 // @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
 // @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
 // @require      http://cdn.bootcss.com/jsSHA/2.2.0/sha1.js
+// @require      https://rawgit.com/pierrec/js-xxhash/master/build/xxhash.min.js
 // @run-at       document-start
 // ==/UserScript==
 (function() {
     'use strict';
 var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, g_ver, get_key, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
 
-g_ver = '8.0.0.52';
+g_ver = '8.3.0.25';
 
 Buffer = require('buffer').Buffer;
 
@@ -202,11 +203,18 @@ sig_init = function(body) {
 };
 
 sig_calc = function(arg, src) {
-  var data_buf, data_buf_p, dhash, h1, h1_p, i, l, md4h, out_data, out_data_p, pSig, ret, sz;
+  var data_buf, data_buf_p, dhash, h1, h1_p, h2, h2b, i, l, md4h, out_data, out_data_p, pSig, pad, ret, sz, xxh;
   data_buf = arg.data_buf, data_buf_p = arg.data_buf_p, pSig = arg.pSig, dhash = arg.dhash;
+  xxh = XXH.h64();
+  xxh.init(pSig.readUInt32LE(8));
+  xxh.update(src);
+  h2 = xxh.digest().toString(16);
+  pad = '0000000000000000';
+  h2b = Buffer.from(pad.slice(0, 16 - h2.length) + h2, 'hex').swap64();
   md4h = md4_init(pSig);
   md4h.update(dhash);
   md4h.update(src);
+  md4h.update(h2b);
   md4h.update(pSig);
   h1 = new Uint8Array(md4h.buffer());
   h1_p = Module._malloc(16);
@@ -272,8 +280,8 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
   data = ec115_encode_data(dictToForm({
     GUID: fake.slice(0, 20),
     account: account,
-    device: 'DEEPIN',
-    device_id: fake.slice(1, 13).toUpperCase(),
+    device: 'GhostXP',
+    device_id: fake.slice(2, 14).toUpperCase(),
     device_type: 'windows',
     disk_serial: fake.slice(0, 8).toUpperCase(),
     dk: '',
@@ -286,6 +294,7 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
     system_info: ("            " + fake[1] + fake[0] + fake[3] + fake[2] + fake[5] + fake[4] + fake[7] + fake[6]).toUpperCase(),
     time: tm,
     login_type: login_type,
+    signew: 1,
     sign115: sig_calc(sig, md5("" + account + tm))
   }), key);
   return GM_xmlhttpRequest({
