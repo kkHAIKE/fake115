@@ -8,3 +8,6 @@
 
 ## PS
 [emscripten](http://kripken.github.io/emscripten-site) 能拯救世界
+
+## 支付宝捐助
+![支付宝捐助](https://github.com/kkHAIKE/fake115/blob/master/qrcode.png)
