@@ -407,7 +407,7 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
       js_top_panel_box.appendChild(cont);
       cont.style.position = 'absolute';
       cont.style.top = '20px';
-      cont.style.left = '280px';
+      cont.style.left = '320px';
       fastSig = function(userid, fileid, target, userkey) {
         var sha1, tmp;
         sha1 = new jsSHA('SHA-1', 'TEXT');

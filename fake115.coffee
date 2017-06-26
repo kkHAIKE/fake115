@@ -342,7 +342,7 @@ unsafeWindow.document.addEventListener 'DOMContentLoaded', ->
 
       cont.style.position = 'absolute'
       cont.style.top = '20px'
-      cont.style.left = '280px'
+      cont.style.left = '320px'
 
       fastSig = (userid, fileid, target, userkey) ->
         sha1 = new jsSHA 'SHA-1', 'TEXT'
