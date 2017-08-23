@@ -29,6 +29,8 @@ g_ver = '8.3.0.25'
 
 Buffer = require('buffer').Buffer
 LZ4 = require 'lz4'
+elliptic = window.elliptic
+md4 = window.md4
 
 stringToBytes = (s) ->
   ret = []
@@ -311,7 +313,7 @@ preLoginEncrypt = (n,g) ->
 
               LoginEncrypt_ JSON.parse(n), g, {pub, key}, sig
             catch error
-              GM_log "#{error.stack}"
+              GM_log "#{error.message}\n#{error.stack}"
           else
             GM_log JSON.stringify json
         else
@@ -324,7 +326,7 @@ browserInterface.LoginEncrypt = (n,g) ->
   try
     preLoginEncrypt n, g
   catch error
-    GM_log "#{error.stack}"
+    GM_log "#{error.message}\n#{error.stack}"
 
 unsafeWindow.browserInterface = cloneInto browserInterface, unsafeWindow, {cloneFunctions: true}
 
@@ -460,6 +462,6 @@ unsafeWindow.document.addEventListener 'DOMContentLoaded', ->
         unsafeWindow.UPLOAD_CONFIG_H5.__defineGetter__ 'size_limit', fakeSizeLimitGetter
 
   catch error
-    GM_log "#{error.stack}"
+    GM_log "#{error.message}\n#{error.stack}"
 
 `})()`

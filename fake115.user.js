@@ -25,13 +25,17 @@
 // ==/UserScript==
 (function() {
     'use strict';
-var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, g_ver, get_key, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
+var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, elliptic, g_ver, get_key, md4, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
 
 g_ver = '8.3.0.25';
 
 Buffer = require('buffer').Buffer;
 
 LZ4 = require('lz4');
+
+elliptic = window.elliptic;
+
+md4 = window.md4;
 
 stringToBytes = function(s) {
   var i, l, ref, ret;
@@ -362,7 +366,7 @@ preLoginEncrypt = function(n, g) {
               }, sig);
             } catch (error1) {
               error = error1;
-              return GM_log("" + error.stack);
+              return GM_log(error.message + "\n" + error.stack);
             }
           } else {
             return GM_log(JSON.stringify(json));
@@ -385,7 +389,7 @@ browserInterface.LoginEncrypt = function(n, g) {
     return preLoginEncrypt(n, g);
   } catch (error1) {
     error = error1;
-    return GM_log("" + error.stack);
+    return GM_log(error.message + "\n" + error.stack);
   }
 };
 
@@ -552,7 +556,7 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
     }
   } catch (error1) {
     error = error1;
-    return GM_log("" + error.stack);
+    return GM_log(error.message + "\n" + error.stack);
   }
 });
 
