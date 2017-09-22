@@ -12,14 +12,14 @@
 // @connect      passportapi.115.com
 // @connect      proapi.115.com
 // @connect      uplb.115.com
-// @require      http://cdn.bootcss.com/crc-32/0.4.1/crc32.min.js
-// @require      http://cdn.bootcss.com/blueimp-md5/2.3.0/js/md5.min.js
-// @require      https://rawgit.com/ricmoo/aes-js/master/index.js
+// @require      https://cdn.bootcss.com/crc-32/1.1.0/crc32.min.js
+// @require      https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js
+// @require      https://cdn.bootcss.com/aes-js/3.1.0/index.min.js
 // @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.min.js
 // @require      https://rawgit.com/indutny/elliptic/master/dist/elliptic.min.js
 // @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
 // @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
-// @require      http://cdn.bootcss.com/jsSHA/2.2.0/sha1.js
+// @require      https://cdn.bootcss.com/jsSHA/2.3.1/sha1.js
 // @require      https://rawgit.com/pierrec/js-xxhash/master/build/xxhash.min.js
 // @run-at       document-start
 // ==/UserScript==
