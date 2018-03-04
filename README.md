@@ -9,6 +9,8 @@
 firfox 浏览器 57 以上版本，当前只能使用 [tampermonkey](https://addons.mozilla.org/zh-CN/firefox/addon/tampermonkey)
 详情移步 https://github.com/kkHAIKE/fake115/issues/53
 
+Safari 的 Tampermonkey 不出现密码框, 移步 https://github.com/kkHAIKE/fake115/issues/56
+
 ## PS
 [emscripten](http://kripken.github.io/emscripten-site) 能拯救世界
 
