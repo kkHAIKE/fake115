@@ -11,6 +11,8 @@ firfox 浏览器 57 以上版本，当前只能使用 [tampermonkey](https://add
 
 Safari 的 Tampermonkey 不出现密码框, 移步 https://github.com/kkHAIKE/fake115/issues/56
 
+rawgit.com 被墙，移步 https://github.com/kkHAIKE/fake115/issues/57
+
 ## PS
 [emscripten](http://kripken.github.io/emscripten-site) 能拯救世界
 
