@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3.5
+// @version      1.3.7
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
@@ -395,6 +395,10 @@ browserInterface.LoginEncrypt = function(n, g) {
 
 browserInterface.GetBrowserVersion = function() {
   return new String(g_ver);
+};
+    
+browserInterface.ChromeGetIncognitoState = function() {
+  return false;
 };
 
 unsafeWindow.browserInterface = cloneInto(browserInterface, unsafeWindow, {
