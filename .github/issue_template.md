@@ -8,7 +8,7 @@
 
 ### 我的浏览器是，版本是
 
-### 我的油猴插件是，版本是
+### 我的油猴插件是(Violent/Grease/Tamper)monkey，版本是
 
 ### 我的控制台日志如下 (firefox 用户请拷贝 Ctrl+Shift+J 界面中的内容)
 
