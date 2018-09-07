@@ -25,7 +25,7 @@
 // ==/UserScript==
 (function() {
     'use strict';
-var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, elliptic, g_ver, get_key, md4, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
+var Buffer, LZ4, LoginEncrypt_, browserInterface, bytesToHex, bytesToString, cloneInto, dictToForm, dictToQuery, ec115_compress_decode, ec115_decode, ec115_decode_aes, ec115_encode_data, ec115_encode_token, ec115_init, elliptic, g_ver, get_key, md4, md4_init, preLoginEncrypt, ref, sig_calc, sig_init, stringToBytes;
 
 g_ver = '8.3.0.25';
 
@@ -127,7 +127,7 @@ ec115_encode_data = function(data, key) {
     rets.push(Buffer.from(key2));
     j += 16;
   }
-  return Buffer.concat(rets).toString('latin1');
+  return Buffer.concat(rets);
 };
 
 ec115_decode_aes = function(data, key) {
@@ -304,7 +304,9 @@ LoginEncrypt_ = function(arg, g, arg1, sig) {
   return GM_xmlhttpRequest({
     method: 'POST',
     url: "http://passport.115.com/?ct=encrypt&ac=login&k_ec=" + token,
-    data: data,
+    data: GM_info.scriptHandler === 'Violentmonkey' ? new Blob([data.buffer], {
+      type: 'application/octet-binary'
+    }) : data.toString('latin1'),
     binary: true,
     responseType: 'arraybuffer',
     headers: {
@@ -396,10 +398,16 @@ browserInterface.LoginEncrypt = function(n, g) {
 browserInterface.GetBrowserVersion = function() {
   return new String(g_ver);
 };
-    
+
 browserInterface.ChromeGetIncognitoState = function() {
   return false;
 };
+
+if (typeof cloneInto !== 'function') {
+  cloneInto = function(x) {
+    return x;
+  };
+}
 
 unsafeWindow.browserInterface = cloneInto(browserInterface, unsafeWindow, {
   cloneFunctions: true

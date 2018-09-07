@@ -15,12 +15,12 @@
 // @require      https://cdn.bootcss.com/crc-32/1.2.0/crc32.min.js
 // @require      https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js
 // @require      https://cdn.bootcss.com/aes-js/3.1.0/index.min.js
-// @require      https://rawgit.com/kkHAIKE/node-lz4/balabala/build/lz4.min.js
-// @require      https://rawgit.com/indutny/elliptic/master/dist/elliptic.min.js
-// @require      https://rawgit.com/emn178/js-md4/master/build/md4.min.js
-// @require      https://rawgit.com/kkHAIKE/fake115/master/fec115.min.js
+// @require      https://raw.github.com/kkHAIKE/node-lz4/balabala/build/lz4.min.js
+// @require      https://raw.github.com/indutny/elliptic/master/dist/elliptic.min.js
+// @require      https://raw.github.com/emn178/js-md4/master/build/md4.min.js
+// @require      https://raw.github.com/kkHAIKE/fake115/master/fec115.min.js
 // @require      https://cdn.bootcss.com/jsSHA/2.3.1/sha1.js
-// @require      https://rawgit.com/pierrec/js-xxhash/master/build/xxhash.min.js
+// @require      https://raw.github.com/pierrec/js-xxhash/master/build/xxhash.min.js
 // @run-at       document-start
 // ==/UserScript==
 (function() {
@@ -103,7 +103,8 @@ ec115_encode_data = (data, key) ->
     rets.push Buffer.from key2
 
     j += 16
-  return Buffer.concat(rets).toString 'latin1'
+  return Buffer.concat rets
+
 
 ec115_decode_aes = (data, key) ->
   key1 = key[0...16]
@@ -255,7 +256,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
   GM_xmlhttpRequest
     method: 'POST'
     url: "http://passport.115.com/?ct=encrypt&ac=login&k_ec=#{token}" #encodeURIComponent
-    data: data
+    data: if GM_info.scriptHandler is 'Violentmonkey' then new Blob [data.buffer], {type: 'application/octet-binary'} else data.toString 'latin1'
     binary: true
     responseType: 'arraybuffer'
     #overrideMimeType: 'text\/plain; charset=x-user-defined'
@@ -330,9 +331,12 @@ browserInterface.LoginEncrypt = (n,g) ->
 
 browserInterface.GetBrowserVersion = ->
   new String(g_ver)
-    
+
 browserInterface.ChromeGetIncognitoState = ->
   false
+
+if typeof cloneInto isnt 'function'
+  cloneInto = (x) -> x
 
 unsafeWindow.browserInterface = cloneInto browserInterface, unsafeWindow, {cloneFunctions: true}
 
