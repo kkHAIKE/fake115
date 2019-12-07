@@ -1,7 +1,7 @@
 `// ==UserScript==
 // @name         fake 115Browser
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.3.7
+// @version      1.3.8
 // @description  伪装115浏览器
 // @author       kkhaike
 // @match        *://115.com/*
@@ -21,6 +21,7 @@
 // @require      https://raw.github.com/kkHAIKE/fake115/master/fec115.min.js
 // @require      https://cdn.bootcss.com/jsSHA/2.3.1/sha1.js
 // @require      https://raw.github.com/pierrec/js-xxhash/master/build/xxhash.min.js
+// @require      https://raw.github.com/omichelsen/compare-versions/master/index.js
 // @run-at       document-start
 // ==/UserScript==
 (function() {
@@ -256,7 +257,7 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
   GM_xmlhttpRequest
     method: 'POST'
     url: "http://passport.115.com/?ct=encrypt&ac=login&k_ec=#{token}" #encodeURIComponent
-    data: if GM_info.scriptHandler is 'Violentmonkey' then new Blob [data.buffer], {type: 'application/octet-binary'} else data.toString 'latin1'
+    data: if GM_info.scriptHandler is 'Violentmonkey' and compareVersions.compare GM_info.version, 'v2.12.2', '<' then new Blob [data.buffer], {type: 'application/octet-binary'} else data.toString 'latin1'
     binary: true
     responseType: 'arraybuffer'
     #overrideMimeType: 'text\/plain; charset=x-user-defined'
