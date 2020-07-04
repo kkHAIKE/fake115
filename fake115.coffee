@@ -264,6 +264,8 @@ LoginEncrypt_ = ({account, passwd, environment, goto, login_type}, g, {pub, key}
     headers:
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
     #anonymous: true
+    onerror: (response)->
+      GM_log "response.status = #{response.status}, response.statusText = #{response.statusText}"
     onload: (response)->
       if response.status is 200
         data = Buffer.from response.response
@@ -300,6 +302,8 @@ preLoginEncrypt = (n,g) ->
     url: "https://passportapi.115.com/app/2.0/web/#{g_ver}/login/sign?k_ec=#{token}"
     responseType: 'arraybuffer'
     anonymous: true
+    onerror: (response)->
+      GM_log "response.status = #{response.status}, response.statusText = #{response.statusText}"
     onload: (response)->
       if response.status is 200
         data = Buffer.from response.response

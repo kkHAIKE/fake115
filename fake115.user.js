@@ -294,8 +294,7 @@ LoginEncrypt_ = function({account, passwd, environment, goto, login_type}, g, {p
   }), key);
   return GM_xmlhttpRequest({
     method: 'POST',
-    url: `http://passport.115.com/?ct=encrypt&ac=login&k_ec=${token //encodeURIComponent
-}`,
+    url: `http://passport.115.com/?ct=encrypt&ac=login&k_ec=${token}`,
     data: GM_info.scriptHandler === 'Violentmonkey' && compareVersions.compare(GM_info.version, 'v2.12.2', '<') ? new Blob([data.buffer], {
       type: 'application/octet-binary'
     }) : data.toString('latin1'),
@@ -306,6 +305,9 @@ LoginEncrypt_ = function({account, passwd, environment, goto, login_type}, g, {p
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
     },
     //anonymous: true
+    onerror: function(response) {
+      return GM_log(`response.status = ${response.status}, response.statusText = ${response.statusText}`);
+    },
     onload: function(response) {
       var date, datestr, json;
       if (response.status === 200) {
@@ -346,6 +348,9 @@ preLoginEncrypt = function(n, g) {
     url: `https://passportapi.115.com/app/2.0/web/${g_ver}/login/sign?k_ec=${token}`,
     responseType: 'arraybuffer',
     anonymous: true,
+    onerror: function(response) {
+      return GM_log(`response.status = ${response.status}, response.statusText = ${response.statusText}`);
+    },
     onload: function(response) {
       var body, data, error, json, sig;
       if (response.status === 200) {
