@@ -1,13 +1,14 @@
 `// ==UserScript==
 // @name         fake 115Browser download
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.0.0
+// @version      1.0.1
 // @description  伪装115浏览器下载
 // @author       kkhaike
 // @match        *://115.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @grant        GM_log
+// @grant        GM_setClipboard
 // @connect      proapi.115.com
 // @require      https://rawgit.com/kkHAIKE/jsencrypt/balabala/bin/jsencrypt.js
 // @require      https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js
@@ -168,6 +169,16 @@ CreateDownloadTask = (o) ->
       GM_log rs
 
       con = $ '<ul/>'
+      if n > 1
+        btn = $ '<button>复制所有链接</button>'
+        con.append '<li/>'
+        con.children(':first').append btn
+        btn.click () ->
+          all = ''
+          for f in rs
+            all += "#{f.url.url}\n"
+          GM_setClipboard all
+
       for f in rs
         con.append "<li><a href='#{f.url.url}'>#{f.file_name}</a></li>"
 
