@@ -5,6 +5,7 @@
 // @description  伪装115浏览器下载
 // @author       kkhaike
 // @match        *://115.com/*
+// @match        *://v.anxia.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @grant        GM_log
@@ -251,6 +252,10 @@ browserInterface.CreateDownloadTask = function(s) {
     error = error1;
     return GM_log(`${error.message}\n${error.stack}`);
   }
+};
+
+browserInterface.GetBrowserVersion = function() {
+ return "100.0.0"; //目前（20210101）需要大于23.9.3
 };
 
 if (typeof cloneInto !== 'function') {
