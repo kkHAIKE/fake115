@@ -1,10 +1,11 @@
 `// ==UserScript==
 // @name         fake 115Browser download
 // @namespace    http://github.com/kkHAIKE/fake115
-// @version      1.0.1
+// @version      1.0.2
 // @description  伪装115浏览器下载
 // @author       kkhaike
 // @match        *://115.com/*
+// @match        *://v.anxia.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @grant        GM_log
@@ -199,6 +200,9 @@ browserInterface.CreateDownloadTask = (s) ->
     CreateDownloadTask JSON.parse decodeURIComponent s
   catch error
     GM_log "#{error.message}\n#{error.stack}"
+
+browserInterface.GetBrowserVersion = ->
+  "100.0.0" # 目前（20210102）需要大于23.9.3
 
 if typeof cloneInto isnt 'function'
   cloneInto = (x) -> x
