@@ -17,7 +17,7 @@
 // ==/UserScript==
 (function() {
     'use strict';
-var CreateDownloadTask, CreateDownloadTask_, browserInterface, bytesToString, cloneInto, g_key_l, g_key_s, g_kts, m115_asym_decode, m115_asym_encode, m115_decode, m115_encode, m115_getkey, m115_sym_decode, m115_sym_encode, ref, srsa, stringToBytes, xor115_enc;
+var CreateDownloadTask, CreateDownloadTask_, browserInterface, bytesToString, cloneInto, g_key_l, g_key_s, g_kts, m115_asym_decode, m115_asym_encode, m115_decode, m115_encode, m115_getkey, m115_sym_decode, m115_sym_encode, ref, stringToBytes, xor115_enc;
 
 class MyRsa {
   constructor () {
@@ -186,7 +186,7 @@ bytesToString = function(b) {
 
 
 m115_asym_encode = function(src, srclen) {
-  var i, j, m, ref, ret, text;
+  var i, j, m, ref, ret
   m = 128 - 11;
   ret = '';
   for (i = j = 0, ref = Math.floor((srclen + m - 1) / m); (0 <= ref ? j < ref : j > ref); i = 0 <= ref ? ++j : --j) {
@@ -211,9 +211,8 @@ m115_encode = function(src, tm) {
   tmp = stringToBytes(src);
   tmp = m115_sym_encode(tmp, tmp.length, key, null);
   tmp = key.slice(0, 16).concat(tmp);
-  zz = m115_asym_encode(tmp, tmp.length);
   return {
-    data: zz,
+    data: m115_asym_encode(tmp, tmp.length),
     key
   };
 };
