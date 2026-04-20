@@ -414,7 +414,7 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
   var cont, error, fakeSizeLimitGetter, fastSig, fastUpload, finput, getUserKey, js_top_panel_box, procLabel, uploadinfo;
   try {
     js_top_panel_box = unsafeWindow.document.getElementById('js_top_panel_box');
-    if (js_top_panel_box != null) {
+    if (js_top_panel_box !== null) {
       cont = document.createElement('div');
       finput = document.createElement('input');
       finput.setAttribute('type', 'file');
@@ -518,7 +518,7 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
             filename: f.name,
             filesize: f.size
           };
-          if (uploadinfo != null) {
+          if (uploadinfo !== null) {
             return fastUpload(param);
           } else {
             return getUserKey(param);
@@ -554,15 +554,15 @@ unsafeWindow.document.addEventListener('DOMContentLoaded', function() {
         return nextPart(0);
       };
     }
-    if (unsafeWindow.UPLOAD_CONFIG_H5 != null) {
+    if (unsafeWindow.UPLOAD_CONFIG_H5 !== null) {
       fakeSizeLimitGetter = function() {
         return 115 * 1024 * 1024 * 1024;
       };
-      if (Object.defineProperty != null) {
+      if (Object.defineProperty !== null) {
         return Object.defineProperty(unsafeWindow.UPLOAD_CONFIG_H5, 'size_limit', {
           get: fakeSizeLimitGetter
         });
-      } else if (Object.prototype.__defineGetter__ != null) {
+      } else if (Object.prototype.__defineGetter__ !== null) {
         return unsafeWindow.UPLOAD_CONFIG_H5.__defineGetter__('size_limit', fakeSizeLimitGetter);
       }
     }
